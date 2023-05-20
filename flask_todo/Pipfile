@@ -8,6 +8,9 @@ flask = "*"
 flask-sqlalchemy = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
+pandas = "*"
+seaborn = "*"
+matplotlib = "*"
 
 [dev-packages]
 

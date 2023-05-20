@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
+from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.py)
+
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -13,6 +15,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+
+exploration = EDA('/Users/fernando_maceda/Documents/GitHub/backend_data_minig/flask_todo/data.csv')  # Crea una instancia de la clase EDA
+# Cargar los datos
+exploration.load_data()
 
 class TodoItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,6 +76,24 @@ def delete_todo(id):
     db.session.commit()
 
     return todo_schema.jsonify(todo_to_delete)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    archivo = request.files['archivo']
+    archivo.save(os.path.join('/Users/fernando_maceda/Documents/GitHub/backend_data_minig/flask_todo', 'data.csv'))  # Cambia 'ruta_de_guardado' a la ruta donde deseas guardar el archivo
+    return 'Archivo guardado correctamente'
+
+@app.route('/data-preview', methods=['GET'])
+def data_preview():
+    num_rows = request.args.get('num_rows', default=5, type=int)
+    preview = exploration.preview_data(num_rows)
+    return jsonify(preview)
+
+@app.route('/summary-statistics', methods=['GET'])
+def summary_statistics():
+    statistics = exploration.summary_statistics()
+    return jsonify(statistics)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
