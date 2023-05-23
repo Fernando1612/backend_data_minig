@@ -1,10 +1,10 @@
+from msilib import Directory
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
 from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.py)
 from pca_p import PCA_P
-from msilib import Directory
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -122,6 +122,13 @@ def perform_pca():
     }
     # Enviar la respuesta al front-end
     return jsonify(response)
+
+# Function to check for data directory
+def check_directory():
+    directory = 'data_dir'
+    if not os.path.exists(directory): # if not exists, create it
+        os.makedirs(directory)
+    return directory
 
 
 if __name__ == '__main__':
