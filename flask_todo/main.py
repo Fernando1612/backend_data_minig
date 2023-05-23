@@ -94,8 +94,11 @@ def upload():
 @app.route('/data-preview', methods=['GET'])
 def data_preview():
     num_rows = request.args.get('num_rows', default=5, type=int)
+    # Obtener los datos como un DataFrame
     preview = exploration.preview_data(num_rows)
+    # Obtener los nombres de las columnas del DataFrame 
     column_names = preview.columns.tolist()
+    # Convertir los datos en una lista de diccionarios
     preview_data_list = preview.to_dict(orient='records')
     # Preparar la respuesta en formato JSON
     response = {
