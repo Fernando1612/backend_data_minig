@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-exploration = EDA('data.csv')  # Crea una instancia de la clase EDA
+exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
 # Cargar los datos
 exploration.load_data()
 
