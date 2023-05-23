@@ -11,6 +11,8 @@ marshmallow-sqlalchemy = "*"
 pandas = "*"
 seaborn = "*"
 matplotlib = "*"
+sklearn = "*"
+scikit-learn = "*"
 
 [dev-packages]
 

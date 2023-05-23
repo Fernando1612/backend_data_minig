@@ -1,4 +1,3 @@
-from msilib import Directory
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -21,7 +20,12 @@ exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
 # Cargar los datos
 exploration.load_data()
 
-
+# Function to check for data directory
+def check_directory():
+    directory = 'data_dir'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return directory
 
 class TodoItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -91,14 +95,15 @@ def upload():
 def data_preview():
     num_rows = request.args.get('num_rows', default=5, type=int)
     preview = exploration.preview_data(num_rows)
-    return jsonify(preview)
-
-# Function to check for data directory
- def check_directory():
-     directory = 'data_dir'
-     if not os.path.exists(directory): # if not exists, create it
-         os.makedirs(directory)
-     return directory
+    column_names = preview.columns.tolist()
+    preview_data_list = preview.to_dict(orient='records')
+    # Preparar la respuesta en formato JSON
+    response = {
+        'column_names': column_names,
+        'data': preview_data_list
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
 
 @app.route('/pca', methods=['GET'])
 def perform_pca():
@@ -123,12 +128,7 @@ def perform_pca():
     # Enviar la respuesta al front-end
     return jsonify(response)
 
-# Function to check for data directory
-def check_directory():
-    directory = 'data_dir'
-    if not os.path.exists(directory): # if not exists, create it
-        os.makedirs(directory)
-    return directory
+
 
 
 if __name__ == '__main__':

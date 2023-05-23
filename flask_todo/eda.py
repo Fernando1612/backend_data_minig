@@ -16,7 +16,7 @@ class EDA:
             
     def preview_data(self, num_rows=5):
         if self.data is not None:
-            return self.data.head(num_rows).to_json()
+            return self.data.head(num_rows)
         else:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
     
