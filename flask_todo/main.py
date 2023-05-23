@@ -1,9 +1,9 @@
+from msilib import Directory
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
 from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.py)
-
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-exploration = EDA('/Users/fernando_maceda/Documents/GitHub/backend_data_minig/flask_todo/data.csv')  # Crea una instancia de la clase EDA
+exploration = EDA('data.csv')  # Crea una instancia de la clase EDA
 # Cargar los datos
 exploration.load_data()
 
@@ -80,7 +80,8 @@ def delete_todo(id):
 @app.route('/upload', methods=['POST'])
 def upload():
     archivo = request.files['archivo']
-    archivo.save(os.path.join('/Users/fernando_maceda/Documents/GitHub/backend_data_minig/flask_todo', 'data.csv'))  # Cambia 'ruta_de_guardado' a la ruta donde deseas guardar el archivo
+    directory = check_directory() # if not exists, dir created for .CSV file
+    archivo.save(os.path.join(directory,'data.csv'))  # Cambia 'ruta_de_guardado' a la ruta donde deseas guardar el archivo
     return 'Archivo guardado correctamente'
 
 @app.route('/data-preview', methods=['GET'])
@@ -93,6 +94,13 @@ def data_preview():
 def summary_statistics():
     statistics = exploration.summary_statistics()
     return jsonify(statistics)
+
+# Function to check for data directory
+def check_directory():
+    directory = 'data_dir'
+    if not os.path.exists(directory): # if not exists, create it
+        os.makedirs(directory)
+    return directory
 
 
 if __name__ == '__main__':
