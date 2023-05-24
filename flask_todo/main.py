@@ -39,10 +39,10 @@ def data_preview():
     num_rows = request.args.get('num_rows', default=5, type=int)
     # Obtener los datos como un DataFrame
     preview = exploration.preview_data(num_rows)
-    # Obtener los nombres de las columnas del DataFrame 
+    # Obtener los nombres de las columnas del DataFrame en el orden original
     column_names = preview.columns.tolist()
-    # Convertir los datos en una lista de diccionarios
-    preview_data_list = preview.to_dict()
+    # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
+    preview_data_list = preview[column_names].to_dict(orient='records')
     # Preparar la respuesta en formato JSON
     response = {
         'column_names': column_names,
@@ -50,6 +50,7 @@ def data_preview():
     }
     # Enviar la respuesta al front-end
     return jsonify(response)
+
 
 @app.route('/pca', methods=['GET'])
 def perform_pca():
