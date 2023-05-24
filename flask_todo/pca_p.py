@@ -25,6 +25,9 @@ class PCA_P:
         # Eliminar las columnas con valores de tipo string
         self.data = self.data.drop(string_columns, axis=1)
         
+        # Eliminar las filas con valores NaN
+        self.data = self.data.dropna()
+
         # Guardar los nombres de las características
         self.feature_names = list(self.data.columns)[:-1]
         
