@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
@@ -15,10 +15,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
-
-exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
-# Cargar los datos
-exploration.load_data()
 
 # Function to check for data directory
 def check_directory():
@@ -37,6 +33,9 @@ def upload():
 @app.route('/data-preview', methods=['GET'])
 def data_preview():
     num_rows = request.args.get('num_rows', default=5, type=int)
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
     # Obtener los datos como un DataFrame
     preview = exploration.preview_data(num_rows)
     # Obtener los nombres de las columnas del DataFrame en el orden original
@@ -53,6 +52,9 @@ def data_preview():
 
 @app.route('/data-statistics', methods=['GET'])
 def data_stats():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
     # Obtener los datos como un DataFrame(
     stats = exploration.summary_statistics()
     # Obtener los nombres de las columnas del DataFrame en el orden original
@@ -72,8 +74,32 @@ def data_stats():
 
 @app.route('/data-nulls', methods=['GET'])
 def data_nulls():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
     # Obtener los datos como un DataFrame
     preview = exploration.missing_values()
+    # Obtener los nombres de las columnas del DataFrame en el orden original
+    column_names = preview.columns.tolist()
+    # Obtener los nombres de los indices del DataFrame en el orden original
+    indx_names = preview.index.tolist()
+    # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
+    preview_data_list = preview[column_names].to_dict(orient='records')
+    # Preparar la respuesta en formato JSON
+    response = {
+        'column_names': column_names,
+        'index_names' : indx_names,
+        'data': preview_data_list
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
+
+@app.route('/data-all', methods=['GET'])
+def data_all():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
+    preview = exploration.get_all_data()
     # Obtener los nombres de las columnas del DataFrame en el orden original
     column_names = preview.columns.tolist()
     # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
@@ -85,6 +111,30 @@ def data_nulls():
     }
     # Enviar la respuesta al front-end
     return jsonify(response)
+
+@app.route('/plot-histogram', methods=['GET'])
+def plot_histogram():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
+    file_name = exploration.plot_outliers_histogram()
+    return send_file(file_name, mimetype='image/png')
+
+@app.route('/plot-boxplot', methods=['GET'])
+def plot_boxplot():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
+    file_name = exploration.plot_outliers_boxplot()
+    return send_file(file_name, mimetype='image/png')
+
+@app.route('/plot-heatmap', methods=['GET'])
+def plot_heatmap():
+    exploration = EDA('data_dir/data.csv')  # Crea una instancia de la clase EDA
+    # Cargar los datos
+    exploration.load_data()
+    file_name = exploration.plot_correlation_heatmap()
+    return send_file(file_name, mimetype='image/png')
 
 @app.route('/pca', methods=['GET'])
 def perform_pca():
