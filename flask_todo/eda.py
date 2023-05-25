@@ -22,7 +22,7 @@ class EDA:
     
     def summary_statistics(self):
         if self.data is not None:
-            return self.data.describe().to_json()
+            return self.data.describe()
         else:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
     
@@ -34,7 +34,9 @@ class EDA:
             
     def missing_values(self):
         if self.data is not None:
-            return self.data.isnull().sum()
+            null_data = self.data.isnull().sum()
+            null_data = null_data.reset_index() # Index a columnas
+            return null_data # Estructura dataframe
         else:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
             

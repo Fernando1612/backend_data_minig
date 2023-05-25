@@ -51,6 +51,40 @@ def data_preview():
     # Enviar la respuesta al front-end
     return jsonify(response)
 
+@app.route('/data-statistics', methods=['GET'])
+def data_stats():
+    # Obtener los datos como un DataFrame(
+    stats = exploration.summary_statistics()
+    # Obtener los nombres de las columnas del DataFrame en el orden original
+    column_names = stats.columns.tolist()
+    # Obtener los nombres de los indices del DataFrame en el orden original
+    indx_names = stats.index.tolist()
+    # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
+    preview_data_list = stats[column_names].to_dict(orient='records')
+    # Preparar la respuesta en formato JSON
+    response = {
+        'column_names': column_names,
+        'index_names' : indx_names,
+        'data': preview_data_list
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
+
+@app.route('/data-nulls', methods=['GET'])
+def data_nulls():
+    # Obtener los datos como un DataFrame
+    preview = exploration.missing_values()
+    # Obtener los nombres de las columnas del DataFrame en el orden original
+    column_names = preview.columns.tolist()
+    # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
+    preview_data_list = preview[column_names].to_dict(orient='records')
+    # Preparar la respuesta en formato JSON
+    response = {
+        'column_names': column_names,
+        'data': preview_data_list
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
 
 @app.route('/pca', methods=['GET'])
 def perform_pca():
