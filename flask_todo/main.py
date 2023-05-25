@@ -4,6 +4,10 @@ from flask_marshmallow import Marshmallow
 import os
 from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.py)
 from pca_p import PCA_P
+from bosques import Bosques
+import matplotlib.pyplot as plt
+import io
+import base64
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -159,28 +163,36 @@ def perform_pca():
     # Enviar la respuesta al front-end
     return jsonify(response)
 
+@app.route('/column-names', methods=['GET'])
+def get_column_names():
+    bosques = Bosques('data_dir/data.csv')
+    bosques.load_data()
+    column_names = bosques.column_names()
+    return jsonify({'column_names': column_names})
+
 @app.route('/forest', methods=['GET'])
 def train_model():
     target_column = request.args.get('target_column')
     csv_file = 'data_dir/data.csv'  # Ruta y nombre de tu archivo CSV
-    bosques = Bosques()
+    bosques = Bosques('data_dir/data.csv')
     bosques.cargar_datos(csv_file, target_column)
     bosques.dividir_datos()
     bosques.entrenar_modelo()
     accuracy = bosques.evaluar_modelo()
-    return jsonify({'accuracy': accuracy})
-
-
-@app.route('/forest-predict', methods=['POST'])
-def predict():
-    data = request.get_json()
-    nuevos_datos = pd.DataFrame(data)
-    bosques = Bosques()
-    # Cargar el modelo previamente entrenado
-    bosques.model = RandomForestClassifier(n_estimators=100)
-    bosques.model = bosques.model.load('modelo_entrenado.pkl')
-    predicciones = bosques.predecir(nuevos_datos)
-    return jsonify({'predictions': predicciones.tolist()})
+    # Generar la gráfica de la curva ROC
+    bosques.graficar_curva_roc()
+    # Leer la imagen de la curva ROC generada
+    with open('roc.png', 'rb') as file:
+        image_data = file.read()
+    # Convertir la imagen a base64 para enviarla como respuesta
+    encoded_image = base64.b64encode(image_data).decode('utf-8')
+    # Preparar la respuesta en formato JSON
+    response = {
+        'accuracy': accuracy,
+        'roc_image': encoded_image
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
 
 
 if __name__ == '__main__':
