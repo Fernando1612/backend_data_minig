@@ -1,13 +1,18 @@
 import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import auc
 import matplotlib
 matplotlib.use('Agg')  # Configurar el backend de Matplotlib antes de importarlo
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pickle
+
 
 class Bosques:
     def __init__(self, file_path):
@@ -31,7 +36,8 @@ class Bosques:
 
     def column_names(self):
         if self.data is not None:
-            return self.data.columns.tolist()
+            numeric_columns = self.data.select_dtypes(include=[np.number]).columns.tolist()
+            return numeric_columns
         else:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
 
@@ -47,17 +53,22 @@ class Bosques:
             self.X, self.y, test_size=test_size, random_state=random_state
         )
 
-    def entrenar_modelo(self, n_estimators=100):
-        self.model = RandomForestClassifier(n_estimators=n_estimators)
+    def entrenar_modelo(self, n_estimators=100, criterion='gini', max_depth=None,
+                    min_samples_split=2, min_samples_leaf=1, max_features='auto'):
+        self.model = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
+                                            max_depth=max_depth, min_samples_split=min_samples_split,
+                                            min_samples_leaf=min_samples_leaf, max_features=max_features)
         self.model.fit(self.X_train, self.y_train)
 
     def predecir(self, X):
+        self.X = self.X.select_dtypes(exclude=['object'])
         return self.model.predict(X)
 
     def evaluar_modelo(self):
         y_pred = self.predecir(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        return accuracy
+        confusion = confusion_matrix(self.y_test, y_pred)
+        return accuracy, confusion
     
     def graficar_curva_roc(self):
         y_pred_proba = self.model.predict_proba(self.X_test)
@@ -83,3 +94,27 @@ class Bosques:
         plt.savefig('roc.png')
         plt.close()
 
+    def mostrar_matriz_confusion(self):
+        _, confusion = self.evaluar_modelo()
+        classes = self.label_encoder.classes_
+        confusion_df = pd.DataFrame(confusion, index=classes, columns=classes)
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(confusion_df, annot=True, fmt='d', cmap='Blues')
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        plt.title('Matriz de Confusión')
+        plt.savefig('confusion_matrix.png')
+        plt.close()
+
+    def guardar_modelo(self, file_path):
+        with open(file_path, 'wb') as file:
+            pickle.dump(self.model, file)
+        print("Modelo guardado exitosamente.")
+
+    def cargar_modelo(self, file_path):
+        with open(file_path, 'rb') as file:
+            self.model = pickle.load(file)
+            parametros = self.modelo.get_params()
+            # Imprimir los parámetros
+            print(parametros)
+        print("Modelo cargado exitosamente.")
