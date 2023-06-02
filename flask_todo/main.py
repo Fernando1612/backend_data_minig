@@ -28,6 +28,8 @@ ma = Marshmallow(app)
 
 bosques = Bosques('data_dir/data.csv')
 
+modelo_rf = None
+
 # Function to check for data directory
 def check_directory():
     directory = 'data_dir'
@@ -273,11 +275,26 @@ def guardar_modelo():
 
 @app.route('/cargar-modelo-clasificador', methods=['GET'])
 def cargar_modelo_clasificador():
+    global modelo_rf  # Indicar que se usará la variable global
     file_path = request.args.get('file_path')
     with open(file_path, 'rb') as file:
         modelo_rf = pickle.load(file)
-    parametros = modelo_rf.feature_importances_
     return jsonify({'message': 'Modelo cargado exitosamente.'})
+
+@app.route('/predict-modelo', methods=['GET'])
+def predecir_modelo():
+    # Obtener las características de entrada para la predicción
+    feature_params = request.args.to_dict()
+    # Convertir feature_params en un DataFrame
+    df = pd.DataFrame([feature_params])
+    # Realizar la predicción utilizando el método predecir de la clase Bosques
+    prediction = modelo_rf.predict(df)
+    # Preparar la respuesta en formato JSON
+    response = {
+        'prediction': prediction.tolist()
+    }
+    # Enviar la respuesta al front-end
+    return json.dumps(response)
 
 @app.route('/guardar-column-names', methods=['GET'])
 def save_column_names():
@@ -293,7 +310,6 @@ def load_column_names():
     file_path = request.args.get('file_path')
     data = pd.read_csv(file_path)
     column_names = data.columns.tolist()
-    print(column_names)
     return jsonify({'column_names': column_names})
 
 @app.route('/archivos_pkl', methods=['GET'])
