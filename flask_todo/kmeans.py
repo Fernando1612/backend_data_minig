@@ -61,6 +61,10 @@ class KMEANS:
         else:
             raise ValueError("Tipo de estandarización no válido. Los tipos válidos son: 'StandardScaler', 'MinMaxScaler', 'Normalizer'.")
 
+        string_columns = self.data.select_dtypes(include=['object']).columns
+        self.data = self.data.drop(string_columns, axis=1)
+        self.data = self.data.dropna()
+
         MEstandarizada = self.scaler.fit_transform(self.data)
         MParticional = KMeans(n_clusters=n_clusters, random_state=0).fit(MEstandarizada)
         labels = MParticional.predict(MEstandarizada)

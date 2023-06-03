@@ -307,6 +307,7 @@ def predecir_modelo():
 def save_column_names():
     file_path = request.args.get('file_path')  # Obtener la ruta del archivo para guardar los nombres de las columnas
     target = request.args.get('target')  # Obtener el nombre de la columna objetivo
+    bosques.load_data()
     column_names = bosques.column_names(target)  # Obtener los nombres de las columnas
     with open(file_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
