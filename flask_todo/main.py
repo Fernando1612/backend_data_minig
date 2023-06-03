@@ -5,6 +5,7 @@ import os
 from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.py)
 from pca_p import PCA_P
 from bosques import Bosques
+from bosque_regresor import BosqueRegresor
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -27,6 +28,7 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 bosques = Bosques('data_dir/data.csv')
+bosque_regresor = BosqueRegresor('data_dir/data.csv')
 
 modelo_rf = None
 
@@ -267,6 +269,77 @@ def predict_data():
     # Enviar la respuesta al front-end
     return json.dumps(response)
 
+@app.route('/forest-regressor-train', methods=['GET'])
+def train_model_regressor():
+    target_column = request.args.get('target_column')
+    n_estimators = int(request.args.get('n_estimators', 100))
+    criterion = request.args.get('criterion', 'mse')
+    max_depth = request.args.get('max_depth', None)
+    if max_depth == 'None':
+        max_depth = None
+    else:
+        max_depth = int(max_depth)
+    min_samples_split = int(request.args.get('min_samples_split', 2))
+    min_samples_leaf = int(request.args.get('min_samples_leaf', 1))
+    max_features = request.args.get('max_features', 'auto')
+    csv_file = 'data_dir/data.csv'  # Ruta y nombre de tu archivo CSV
+    bosque_regresor.cargar_datos(csv_file, target_column)
+    bosque_regresor.dividir_datos()
+    bosque_regresor.entrenar_modelo(n_estimators=n_estimators, criterion=criterion,
+                                     max_depth=max_depth, min_samples_split=min_samples_split,
+                                     min_samples_leaf=min_samples_leaf, max_features=max_features)
+    mse, criterion, feature_importances, mae, rmse, r2 = bosque_regresor.evaluar_modelo()
+
+    bosque_regresor.graficar_pronostico()
+
+    with open('pronostico.png', 'rb') as file:
+        image_data = file.read()
+    # Convertir la imagen a base64 para enviarla como respuesta
+    encoded_image = base64.b64encode(image_data).decode('utf-8')
+
+    response = {
+        'mse': mse,
+        'criterion': criterion,
+        'feature_importances': feature_importances.tolist(),
+        'mean_absolute_error': mae,
+        'RMSE': rmse,
+        'r2_score': r2,
+        'pronostico_image': encoded_image,
+    }
+
+    return jsonify(response)
+
+
+@app.route('/forest-regressor-predict', methods=['GET'])
+def predict_data_regressor():
+    # Obtener las características de entrada para la predicción
+    feature_params = request.args.to_dict()
+    # Convertir feature_params en un DataFrame
+    df = pd.DataFrame([feature_params])
+    # Realizar la predicción utilizando el método predecir de la clase BosqueRegresor
+    prediction = bosque_regresor.predecir(df)
+    # Preparar la respuesta en formato JSON
+    response = {
+        'prediction': prediction.tolist()
+    }
+    # Enviar la respuesta al front-end
+    return json.dumps(response)
+
+
+@app.route('/guardar-modelo-regresor', methods=['GET'])
+def guardar_modelo_regresor():
+    file_path = request.args.get('file_path')
+    bosque_regresor.guardar_modelo(file_path)
+    return jsonify({'message': 'Modelo guardado exitosamente.'})
+
+@app.route('/cargar-modelo-regresor', methods=['GET'])
+def cargar_modelo_regresor():
+    global modelo_rf  # Indicar que se usará la variable global
+    file_path = request.args.get('file_path')
+    with open(file_path, 'rb') as file:
+        modelo_rf = pickle.load(file)
+    return jsonify({'message': 'Modelo cargado exitosamente.'})
+
 @app.route('/guardar-modelo-clasificador', methods=['GET'])
 def guardar_modelo():
     file_path = request.args.get('file_path')
@@ -299,7 +372,18 @@ def predecir_modelo():
 @app.route('/guardar-column-names', methods=['GET'])
 def save_column_names():
     file_path = request.args.get('file_path')
-    column_names = bosques.column_names()
+    target = request.args.get('target')
+    column_names = bosques.column_names(target)
+    with open(file_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(column_names)
+    return jsonify({'message': 'Columnas guardadas exitosamente.'})
+
+@app.route('/guardar-column-names-regresor', methods=['GET'])
+def save_column_names_regresor():
+    file_path = request.args.get('file_path')
+    target = request.args.get('target')
+    column_names = bosque_regresor.column_names(target)
     with open(file_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(column_names)

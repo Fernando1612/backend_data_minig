@@ -34,10 +34,15 @@ class Bosques:
         except FileNotFoundError:
             print("Error al cargar el archivo. Verifica la ruta proporcionada.")
 
-    def column_names(self):
+    def column_names(self,target=None):
         if self.data is not None:
-            numeric_columns = self.data.select_dtypes(include=[np.number]).columns.tolist()
-            return numeric_columns
+            if target == None:
+                numeric_columns = self.data.select_dtypes(include=[np.number]).columns.tolist()
+                return numeric_columns
+            else:
+                del self.data[target]
+                numeric_columns = self.data.select_dtypes(include=[np.number]).columns.tolist()
+                return numeric_columns
         else:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
 
