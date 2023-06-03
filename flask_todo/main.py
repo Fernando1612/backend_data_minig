@@ -6,6 +6,7 @@ from eda import EDA  # Importa la clase EDA desde tu archivo de clase EDA (eda.p
 from pca_p import PCA_P
 from bosques import Bosques
 from bosque_regresor import BosqueRegresor
+from kmeans import KMEANS
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -29,6 +30,7 @@ ma = Marshmallow(app)
 
 bosques = Bosques('data_dir/data.csv')
 bosque_regresor = BosqueRegresor('data_dir/data.csv')
+
 
 modelo_rf = None
 
@@ -395,6 +397,71 @@ def load_column_names():
     data = pd.read_csv(file_path)
     column_names = data.columns.tolist()
     return jsonify({'column_names': column_names})
+
+@app.route('/kmeans-elbow', methods=['GET'])
+def plot_kmeans_elbow():
+    scaler_type = request.args.get('scaler_type', default='StandardScaler', type=str)
+    n_clusters = request.args.get('n_clusters', default=2, type=int)
+    kmeans = KMEANS(n_clusters)
+    kmeans.load_data('data_dir/data.csv')
+    kmeans.fit(scaler_type=scaler_type)
+    kmeans.plot_elbow()
+    
+    return send_file('kmeans.png', mimetype='image/png')
+
+@app.route('/kmeans', methods=['GET'])
+def kmeans():
+    scaler_type = request.args.get('scaler_type', default='StandardScaler', type=str)
+    n_clusters = request.args.get('n_clusters', default=2, type=int)
+    kmeans = KMEANS(n_clusters)
+
+    kmeans.load_data('data_dir/data.csv')
+
+    dataFrame,centroide,count_df = kmeans.created_df(n_clusters,scaler_type)
+    preview_data_list = dataFrame.head(10)
+
+    column_names = dataFrame.columns.tolist()
+    preview_data_list = preview_data_list[column_names].to_dict(orient='records')
+
+    # Obtener los nombres de las columnas del DataFrame en el orden original
+    column_names_centroide = centroide.columns.tolist()
+    # Convertir los datos en una lista de diccionarios manteniendo el orden de las columnas
+    preview_data_list_centroide = centroide[column_names_centroide].to_dict(orient='records')
+    # Preparar la respuesta en formato JSON
+
+    column_names_count = count_df.columns.tolist()
+    preview_data_list_count = count_df[column_names_count].to_dict(orient='records')
+
+    with open('data_k.png', 'rb') as file:
+        image_data = file.read()
+    # Convertir la imagen a base64 para enviarla como respuesta
+    encoded_image = base64.b64encode(image_data).decode('utf-8')
+
+    response = {
+        'column_names': column_names,
+        'data': preview_data_list,
+
+        'column_names_centroide': column_names_centroide,
+        'data_centroide': preview_data_list_centroide,
+
+        'column_names_count': column_names_count,
+        'data_count': preview_data_list_count,
+
+        'kmeans_image': encoded_image,
+    }
+    # Enviar la respuesta al front-end
+    return jsonify(response)
+
+@app.route('/guardar-data-frame', methods=['GET'])
+def save_data_frame():
+    file_path = request.args.get('file_path')
+    scaler_type = request.args.get('scaler_type', default='StandardScaler', type=str)
+    n_clusters = request.args.get('n_clusters', default=2, type=int)
+    kmeans = KMEANS(n_clusters)
+    kmeans.load_data('data_dir/data.csv')
+    dataFrame = kmeans.save_data_frame(n_clusters, scaler_type)
+    dataFrame.to_csv(file_path, header=True, index=False)
+    return jsonify({'message': 'Columnas guardadas exitosamente.'})
 
 @app.route('/archivos_pkl', methods=['GET'])
 def obtener_archivos_pkl():

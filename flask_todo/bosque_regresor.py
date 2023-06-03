@@ -9,6 +9,7 @@ matplotlib.use('Agg')  # Configurar el backend de Matplotlib antes de importarlo
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
+from kneed import KneeLocator
 
 
 class BosqueRegresor:

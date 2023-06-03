@@ -13,6 +13,7 @@ seaborn = "*"
 matplotlib = "*"
 sklearn = "*"
 scikit-learn = "*"
+kneed = "*"
 
 [dev-packages]
 
