@@ -34,7 +34,8 @@ class Bosques:
         except FileNotFoundError:
             print("Error al cargar el archivo. Verifica la ruta proporcionada.")
 
-    def column_names(self,target=None):
+    def column_names(self, target=None):
+        # Devuelve los nombres de las columnas numéricas del conjunto de datos
         if self.data is not None:
             if target == None:
                 numeric_columns = self.data.select_dtypes(include=[np.number]).columns.tolist()
@@ -47,6 +48,7 @@ class Bosques:
             print("No se han cargado los datos. Utiliza el método 'load_data()' primero.")
 
     def cargar_datos(self, csv_file, target_column):
+        # Carga los datos desde un archivo CSV y realiza el preprocesamiento básico
         self.data = pd.read_csv(csv_file)
         self.data.dropna(inplace=True)  # Eliminar valores nulos
         self.X = self.data.drop(columns=[target_column])
@@ -54,28 +56,33 @@ class Bosques:
         self.y = self.label_encoder.fit_transform(self.data[target_column])  # LabelEncoder para la variable objetivo
 
     def dividir_datos(self, test_size=0.2, random_state=42):
+        # Divide los datos en conjuntos de entrenamiento y prueba
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y, test_size=test_size, random_state=random_state
         )
 
     def entrenar_modelo(self, n_estimators=100, criterion='gini', max_depth=None,
-                    min_samples_split=2, min_samples_leaf=1, max_features='auto'):
+                        min_samples_split=2, min_samples_leaf=1, max_features='auto'):
+        # Entrena un modelo de Bosque Aleatorio con los parámetros especificados
         self.model = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
                                             max_depth=max_depth, min_samples_split=min_samples_split,
                                             min_samples_leaf=min_samples_leaf, max_features=max_features)
         self.model.fit(self.X_train, self.y_train)
 
     def predecir(self, X):
+        # Realiza predicciones utilizando el modelo entrenado
         self.X = self.X.select_dtypes(exclude=['object'])
         return self.model.predict(X)
 
     def evaluar_modelo(self):
+        # Evalúa el modelo utilizando la precisión y la matriz de confusión
         y_pred = self.predecir(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
         confusion = confusion_matrix(self.y_test, y_pred)
         return accuracy, confusion
-    
+
     def graficar_curva_roc(self):
+        # Grafica la curva ROC para problemas de clasificación multiclase
         y_pred_proba = self.model.predict_proba(self.X_test)
         n_classes = y_pred_proba.shape[1]
         plt.figure()
@@ -84,7 +91,7 @@ class Bosques:
             y_true[y_true != i] = -1
             y_true[y_true == i] = 1
             y_true[y_true == -1] = 0
-            
+
             fpr, tpr, _ = roc_curve(y_true, y_pred_proba[:, i])
             roc_auc = auc(fpr, tpr)
             plt.plot(fpr, tpr, lw=2, label='Clase %d (área = %0.2f)' % (i, roc_auc))
@@ -100,6 +107,7 @@ class Bosques:
         plt.close()
 
     def mostrar_matriz_confusion(self):
+        # Muestra la matriz de confusión en forma de mapa de calor
         _, confusion = self.evaluar_modelo()
         classes = self.label_encoder.classes_
         confusion_df = pd.DataFrame(confusion, index=classes, columns=classes)
@@ -112,14 +120,16 @@ class Bosques:
         plt.close()
 
     def guardar_modelo(self, file_path):
+        # Guarda el modelo entrenado en un archivo
         with open(file_path, 'wb') as file:
             pickle.dump(self.model, file)
         print("Modelo guardado exitosamente.")
 
     def cargar_modelo(self, file_path):
+        # Carga un modelo guardado desde un archivo
         with open(file_path, 'rb') as file:
             self.model = pickle.load(file)
-            parametros = self.modelo.get_params()
+            parametros = self.model.get_params()
             # Imprimir los parámetros
             print(parametros)
         print("Modelo cargado exitosamente.")

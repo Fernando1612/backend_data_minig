@@ -8,7 +8,6 @@ from sklearn.cluster import KMeans
 from kneed import KneeLocator
 from mpl_toolkits.mplot3d import Axes3D
 
-
 class KMEANS:
     def __init__(self, n_clusters):
         self.n_clusters = n_clusters
@@ -20,9 +19,19 @@ class KMEANS:
         self.new_data = None
         
     def load_data(self, filename):
+        """
+        Carga los datos desde un archivo CSV.
+
+        Args:
+            filename: Ruta del archivo CSV.
+        """
         self.data = pd.read_csv(filename)
         
     def preprocess_data(self):
+        """
+        Realiza el preprocesamiento básico de los datos.
+        Elimina columnas de tipo 'object' y filas con valores nulos.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         string_columns = self.data.select_dtypes(include=['object']).columns
@@ -31,6 +40,18 @@ class KMEANS:
         self.feature_names = list(self.data.columns)[:-1]
 
     def created_df(self, n_clusters, scaler_type):
+        """
+        Crea un dataframe con los resultados del algoritmo K-means.
+
+        Args:
+            n_clusters: Número de clusters.
+            scaler_type: Tipo de escala a aplicar.
+
+        Returns:
+            new_data: Dataframe con los datos y las etiquetas de cluster asignadas.
+            CentroidesP: Dataframe con los centroides de cada cluster.
+            count_df: Dataframe con la cantidad de elementos en cada cluster.
+        """
         if scaler_type == "StandardScaler":
             self.scaler = StandardScaler()
         elif scaler_type == "MinMaxScaler":
@@ -73,6 +94,16 @@ class KMEANS:
         return self.new_data, CentroidesP, count_df
 
     def save_data_frame(self, n_clusters, scaler_type):
+        """
+        Crea un dataframe con los resultados del algoritmo K-means y lo retorna.
+
+        Args:
+            n_clusters: Número de clusters.
+            scaler_type: Tipo de escala a aplicar.
+
+        Returns:
+            new_data: Dataframe con los datos y las etiquetas de cluster asignadas.
+        """
         if scaler_type == "StandardScaler":
             self.scaler = StandardScaler()
         elif scaler_type == "MinMaxScaler":
@@ -93,6 +124,15 @@ class KMEANS:
  
         
     def fit(self, scaler_type="StandardScaler"):
+        """
+        Ajusta el modelo de K-means a los datos cargados.
+
+        Args:
+            scaler_type: Tipo de escala a aplicar.
+
+        Raises:
+            ValueError: Si no se han cargado los datos.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         self.preprocess_data()
@@ -111,6 +151,12 @@ class KMEANS:
         self.labels = self.kmeans.labels_
         
     def transform(self):
+        """
+        Realiza la transformación de los datos cargados utilizando el modelo K-means ajustado.
+
+        Returns:
+            transformed_df: Dataframe con las componentes transformadas por el modelo K-means.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         
@@ -127,6 +173,12 @@ class KMEANS:
         return transformed_df
     
     def plot_elbow(self):
+        """
+        Grafica el método del codo para determinar el número óptimo de clusters.
+
+        Raises:
+            ValueError: Si no se han cargado los datos.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         

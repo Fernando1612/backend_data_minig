@@ -15,12 +15,27 @@ class PCA_P:
         self.feature_names = None
         
     def load_data(self, filename):
-        # Leer el archivo CSV
+        """
+        Carga los datos desde un archivo CSV.
+
+        Args:
+            filename: Nombre del archivo CSV.
+
+        Raises:
+            ValueError: Si el archivo no existe.
+        """
         self.data = pd.read_csv(filename)
         
     def preprocess_data(self):
+        """
+        Realiza el preprocesamiento de los datos.
+
+        Raises:
+            ValueError: Si no se han cargado los datos.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
+        
         # Identificar columnas con valores de tipo string
         string_columns = self.data.select_dtypes(include=['object']).columns
         # Eliminar las columnas con valores de tipo string
@@ -31,6 +46,16 @@ class PCA_P:
         self.feature_names = list(self.data.columns)[:-1]
         
     def fit(self, scaler_type="StandardScaler"):
+        """
+        Ajusta el modelo PCA a los datos cargados.
+
+        Args:
+            scaler_type: Tipo de escala a aplicar.
+
+        Raises:
+            ValueError: Si no se han cargado los datos.
+            ValueError: Si se proporciona un tipo de estandarización no válido.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         
@@ -57,6 +82,15 @@ class PCA_P:
         self.pca.fit(X_std)
         
     def transform(self):
+        """
+        Realiza la transformación de los datos cargados utilizando el modelo PCA ajustado.
+
+        Returns:
+            transformed_df: Dataframe con las componentes transformadas por el modelo PCA.
+
+        Raises:
+            ValueError: Si no se han cargado los datos.
+        """
         if self.data is None:
             raise ValueError("No se han cargado los datos. Utilice el método 'load_data' para cargar los datos desde un archivo CSV.")
         
@@ -82,11 +116,26 @@ class PCA_P:
         return transformed_df
     
     def plot_variance(self, n_components=2):
+        """
+        Grafica la varianza acumulada explicada por cada componente principal.
+
+        Args:
+            n_components: Número de componentes principales a considerar.
+
+        Returns:
+            file_name: Nombre del archivo de imagen generado.
+            varianza: Varianza explicada por los componentes principales seleccionados.
+
+        Raises:
+            ValueError: Si no se ha realizado el ajuste PCA.
+        """
         if self.pca.explained_variance_ratio_ is None:
             raise ValueError("No se ha realizado el ajuste PCA. Utilice el método 'fit' antes de llamar a 'plot_variance'.")
+        
         # Calcular la varianza acumulada
         cumulative_variance = np.cumsum(self.pca.explained_variance_ratio_)
         varianza = sum(self.pca.explained_variance_ratio_[0:n_components])
+        
         # Crear el gráfico de la varianza acumulada
         plt.plot(cumulative_variance)
         plt.xlabel('Número de componentes')
@@ -95,5 +144,5 @@ class PCA_P:
         plt.grid()
         plt.savefig(file_name)  # Guarda la imagen en un archivo
         plt.close()  # Cierra la figura para liberar memoria
+        
         return file_name, varianza
-
