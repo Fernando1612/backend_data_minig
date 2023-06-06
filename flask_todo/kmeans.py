@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.colors as mcolors
 
 class KMEANS:
     def __init__(self, n_clusters):
@@ -38,6 +39,8 @@ class KMEANS:
         self.data = self.data.drop(string_columns, axis=1)
         self.data = self.data.dropna()
         self.feature_names = list(self.data.columns)[:-1]
+
+
 
     def created_df(self, n_clusters, scaler_type):
         """
@@ -79,23 +82,35 @@ class KMEANS:
 
         plt.rcParams['figure.figsize'] = (10, 7)
         plt.style.use('ggplot')
-        colores=['red', 'blue', 'green', 'yellow']
-        asignar=[]
-        for row in MParticional.labels_:
-            asignar.append(colores[row])
+
+        # Crear una lista dinámica de colores basada en n_clusters
+        colores = list(mcolors.TABLEAU_COLORS.keys())[:n_clusters]
+
+        asignar = [colores[row] for row in MParticional.labels_]
 
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d') # Subgrafico
-        ax.scatter(MEstandarizada[:, 0], 
-                MEstandarizada[:, 1], 
-                MEstandarizada[:, 2], marker='o', c=asignar, s=60)
-        ax.scatter(MParticional.cluster_centers_[:, 0], 
-                MParticional.cluster_centers_[:, 1], 
-                MParticional.cluster_centers_[:, 2], marker='o', c=colores, s=1000)
+        ax = fig.add_subplot(111, projection='3d')  # Subgrafico
+        ax.scatter(
+            MEstandarizada[:, 0],
+            MEstandarizada[:, 1],
+            MEstandarizada[:, 2],
+            marker='o',
+            c=asignar,
+            s=60
+        )
+        ax.scatter(
+            MParticional.cluster_centers_[:, 0],
+            MParticional.cluster_centers_[:, 1],
+            MParticional.cluster_centers_[:, 2],
+            marker='o',
+            c=colores,
+            s=1000
+        )
         plt.savefig('data_k.png')
         plt.close()
-        
+
         return self.new_data, CentroidesP, count_df
+
 
     def save_data_frame(self, n_clusters, scaler_type):
         """
